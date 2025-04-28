@@ -13,3 +13,6 @@ print(f'evaluate f_1(.5) expects 1: {test1_obj.f_1(.5)}')
 print(f'evaluate f_1(3.5) expects -.5: {test1_obj.f_1(3.5)}')
 print(f'evaluate f_1(0) expects 0 (first point - edge case): {test1_obj.f_1(0)}')
 print(f'evaluate f_1(6) expects 2 (last point - edge case): {test1_obj.f_1(6)}')
+
+# Graph the underlying function
+test1_obj.plt()

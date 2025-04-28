@@ -2,6 +2,7 @@ from Vertice import Vertice
 from Edge import Edge
 from Graph import Graph
 from dijkstra import *
+import matplotlib.pyplot as plt
 
 class LinearApproximation:
 
@@ -79,13 +80,27 @@ class LinearApproximation:
         m = (y2-y1)/(x2-x1)
         return (m * (x - x1)) + y1
 
-    def plt(self, pts):
+    def plt(self, pts=[]):
         '''
         Plots the piecewise linear approximation described by the
         data contained in each Verticie object.
-        pts: array of Verticie objects
+        pts: array of points: [[x1, y1], ..., [xn, yn]]
         '''
-        pass
+
+        fig, ax = plt.subplots()
+        # If no parameter specified, plots the points that define the function
+        if pts == []:
+            pts = self.points
+
+        # Plot a line for each segment between adjacent points
+        for i in range(len(pts) - 1):
+            plt.plot((pts[i][0], pts[i+1][0]), (pts[i][1], pts[i+1][1]), color = 'black')
+        
+        for i in range(len(pts)):
+            plt.plot(pts[i][0], pts[i][1], 'o', color='black') # Add a dot at each point
+            ax.annotate(f'p{i}', (pts[i][0], pts[i][1])) # Label the point with pi
+
+        plt.show()
 
     def approximate(self):
         '''
