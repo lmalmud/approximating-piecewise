@@ -4,6 +4,15 @@ from Graph import Graph
 from dijkstra import *
 import matplotlib.pyplot as plt
 
+'''
+LinearApproximation.py
+2025-04-28
+
+Turns a set of points defining a piecewise function into a graph representation in order
+to find a shortest path that will represent an optimal approximation to the piecewise
+function, given specified cost parameters.
+'''
+
 class LinearApproximation:
 
     def __init__(self, points, alpha, beta):
@@ -22,14 +31,15 @@ class LinearApproximation:
         self.beta = beta # The cost of error
 
         # Create a vertex for each point
-        vertices = []
+        # Note that the points are sorted, so these vertices will also be in sorted order
+        self.vertices = []
         for index, point in enumerate(points):
-            vertices.append(Vertice(point[0], point[1], index))
+            self.vertices.append(Vertice(point[0], point[1], index))
 
-        edges = []
+        self.edges = []
         # Insert an edge (i, j) for each i < j representing adding a segment between a_i, a_j
-        for i, v_i in enumerate(vertices):
-            for j, v_j in enumerate(vertices[i+1:]): # Only would insert an edge from vertices that come after
+        for i, v_i in enumerate(self.vertices):
+            for j, v_j in enumerate(self.vertices[i+1:]): # Only would insert an edge from vertices that come after
                 cost = alpha
                 for k in range(i, j+1):
                     # f_1(x_k): The true value of the function at x_k
@@ -38,7 +48,11 @@ class LinearApproximation:
                     # f_2(x_k): The value of the approximated function at x_k were there a segment between p_i and p_j
                     f2_xk = self.eval_segment(self.points[k][0], self.points[i], self.points[j])
                     cost += beta * pow(f1_xk - f2_xk, 2)
-                edges.append(Edge(v_i, v_j, cost))
+                self.edges.append(Edge(v_i, v_j, cost))
+
+        self.graph = Graph(self.vertices, self.edges)
+        self.s = self.vertices[0] # The source node must be the first point, corresponding to the first vertex
+        self.t = self.vertices[-1] # The terminal node must be the last point, corresponding to the last vertex
 
     def f_1(self, x):
         ''' Evalutes f_1(x), where f_1 is the true function
@@ -94,14 +108,15 @@ class LinearApproximation:
         m = (y2-y1)/(x2-x1)
         return (m * (x - x1)) + y1
 
-    def plt(self, pts=[]):
+    def plt(self, fig, ax, pts=[]):
         '''
         Plots the piecewise linear approximation described by the
         data contained in each Verticie object.
+        fig: matplotlib figure
+        ax: matplotlib axis
         pts: array of points: [[x1, y1], ..., [xn, yn]]
         '''
 
-        fig, ax = plt.subplots()
         # If no parameter specified, plots the points that define the function
         if pts == []:
             pts = self.points
@@ -113,15 +128,44 @@ class LinearApproximation:
         for i in range(len(pts)):
             plt.plot(pts[i][0], pts[i][1], 'o', color='black') # Add a dot at each point
             ax.annotate(f'p{i}', (pts[i][0], pts[i][1])) # Label the point with pi
+    
+    def plt_approximation(self, fig, ax, pts):
+        '''
+        Plots both the original function and the approximated set of vertices on the same plot
+        fig: matplotlib figure
+        ax: matplotlib axis
+        pts: array of points used in the approximation
+        '''
+        self.plt(fig, ax) # Plot the original points and their labels
 
-        plt.show()
+        # Plot a line for each segment between adjacent points in red for the segments chosen in the approximation
+        for i in range(len(pts) - 1):
+            plt.plot((pts[i][0], pts[i+1][0]), (pts[i][1], pts[i+1][1]), color = 'red')
+
+        # Color each selected vertex to be red
+        for i in range(len(pts)):
+            plt.plot(pts[i][0], pts[i][1], 'o', color='red')
+
 
     def approximate(self):
         '''
         Runs Dijkstra's algorithm on the underlying graph in order to determine the new approximation.
-        returns: array of Verticie objects representing the points chosen to be in the approximation
+        returns: array of the points chosen to be in the approximation
         '''
-        pass
+
+        # First item in result is node: shortest distance
+        # Second item in result is node: predecessor in shortest path
+        result = dijkstra(self.graph.WeightMap(), self.s, self.t)
+
+        # Reverse path will determine the nodes that are traversed in the shortest path from p1 -> pn
+        # These are the vertices that will define the optimal approximated piecewise function
+        solution_vertices = reverse_path(result[1], self.s, self.t)
+
+        # Returns the points that are corresponding to the vertices in the shortest path
+        # Recall that the name of a vertex is the number point that it is
+        # So, in order to retrieve the point that corresponds to a particular vertex, we may just access that index
+        approximated_pts = [self.points[int(i.name)] for i in solution_vertices]
+        return approximated_pts
 
     def animate_dijkstra(self, pts_approx):
         '''
