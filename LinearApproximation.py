@@ -29,10 +29,16 @@ class LinearApproximation:
         edges = []
         # Insert an edge (i, j) for each i < j representing adding a segment between a_i, a_j
         for i, v_i in enumerate(vertices):
-            for j, v_j in enumerate(vertices):
+            for j, v_j in enumerate(vertices[i+1:]): # Only would insert an edge from vertices that come after
                 cost = alpha
-                # FIXME: calculate the cost of this edge
-                edges.append(Edge(v_i, v_j))
+                for k in range(i, j+1):
+                    # f_1(x_k): The true value of the function at x_k
+                    f1_xk = self.f_1(self.points[k][0]) 
+                    
+                    # f_2(x_k): The value of the approximated function at x_k were there a segment between p_i and p_j
+                    f2_xk = self.eval_segment(self.points[k][0], self.points[i], self.points[j])
+                    cost += beta * pow(f1_xk - f2_xk, 2)
+                edges.append(Edge(v_i, v_j, cost))
 
     def f_1(self, x):
         ''' Evalutes f_1(x), where f_1 is the true function
@@ -77,6 +83,14 @@ class LinearApproximation:
         y1 = pt1[1]
         x2 = pt2[0]
         y2 = pt2[1]
+
+        # Edge cases when a boundary point is the input
+        if x == x1:
+            return y1
+        elif x == x2:
+            return y2
+        
+        # Otherwise, calculate the point along the segment (x1, y1), (x2, y2)
         m = (y2-y1)/(x2-x1)
         return (m * (x - x1)) + y1
 
