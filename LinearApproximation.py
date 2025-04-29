@@ -15,14 +15,14 @@ function, given specified cost parameters.
 
 class LinearApproximation:
 
-    def __init__(self, points, alpha, beta):
+    def __init__(self, points, alpha, beta, names=[]):
         '''
         Initializes a LinearApproximation object by constructing the corresponding graph.
         points: two-dimensional array of points: [[x1, y1], [x2, y2], ..., [xn, yn]]
         alpha: the additional incured cost of storage
         beta: the additional icured cost of error between true value and approximation
+        names: names associated with each of the points
         '''
-
         if len(points) < 2:
             raise Exception("Must include at least two points in order to define a piecewise function")
 
@@ -30,11 +30,15 @@ class LinearApproximation:
         self.alpha = alpha # The cost of storing a segment
         self.beta = beta # The cost of error
 
+        if names == []:
+            for i in range(len(points)):
+                names.append(i)
+
         # Create a vertex for each point
         # Note that the points are sorted, so these vertices will also be in sorted order
         self.vertices = []
-        for index, point in enumerate(points):
-            self.vertices.append(Vertice(point[0], point[1], index))
+        for index, point in enumerate(self.points):
+            self.vertices.append(Vertice(point[0], point[1], names[index]))
 
         self.edges = []
         # Insert an edge (i, j) for each i < j representing adding a segment between a_i, a_j
@@ -68,7 +72,7 @@ class LinearApproximation:
         
         index = 0
         before_point = self.points[index]
-        while before_point[0] < x:
+        while before_point[0] < x and index < len(self.points):
             index += 1
             before_point = self.points[index]
         after_point = self.points[-1]
@@ -108,49 +112,53 @@ class LinearApproximation:
         m = (y2-y1)/(x2-x1)
         return (m * (x - x1)) + y1
 
-    def plt(self, fig, ax, pts=[]):
+    def plt(self, fig, ax, pts=[], label=True):
         '''
         Plots the piecewise linear approximation described by the
         data contained in each Verticie object.
         fig: matplotlib figure
         ax: matplotlib axis
-        pts: array of points: [[x1, y1], ..., [xn, yn]]
+        pts: array of Vertices
+        label: boolean (if true, points will be labeled)
         '''
 
         # If no parameter specified, plots the points that define the function
         if pts == []:
-            pts = self.points
+            pts = self.vertices
 
         # Plot a line for each segment between adjacent points
         for i in range(len(pts) - 1):
-            plt.plot((pts[i][0], pts[i+1][0]), (pts[i][1], pts[i+1][1]), color = 'black')
+            plt.plot((pts[i].x, pts[i+1].x), (pts[i].y, pts[i+1].y), color = 'black')
         
         for i in range(len(pts)):
-            plt.plot(pts[i][0], pts[i][1], 'o', color='black') # Add a dot at each point
-            ax.annotate(f'p{i}', (pts[i][0], pts[i][1])) # Label the point with pi
+            plt.plot(pts[i].x, pts[i].y, 'o', color='black') # Add a dot at each point
+            if label:
+                ax.annotate(self.vertices[i].name, (pts[i].x, pts[i].y)) # Label the point with pi
     
-    def plt_approximation(self, fig, ax, pts):
+    def plt_approximation(self, fig, ax, pts, label_original=False, label_approx=False):
         '''
         Plots both the original function and the approximated set of vertices on the same plot
         fig: matplotlib figure
         ax: matplotlib axis
-        pts: array of points used in the approximation
+        pts: array of Vertices used in the approximation
         '''
-        self.plt(fig, ax) # Plot the original points and their labels
+        self.plt(fig, ax, label=label_original) # Plot the original points and their labels
 
         # Plot a line for each segment between adjacent points in red for the segments chosen in the approximation
         for i in range(len(pts) - 1):
-            plt.plot((pts[i][0], pts[i+1][0]), (pts[i][1], pts[i+1][1]), color = 'red')
+            plt.plot((pts[i].x, pts[i+1].x), (pts[i].y, pts[i+1].y), color = 'red')
 
         # Color each selected vertex to be red
         for i in range(len(pts)):
-            plt.plot(pts[i][0], pts[i][1], 'o', color='red')
+            plt.plot(pts[i].x, pts[i].y, 'o', color='red')
+            if label_approx:
+                ax.annotate(pts[i].name, (pts[i].x, pts[i].y), color='blue', weight='bold')
 
 
     def approximate(self):
         '''
         Runs Dijkstra's algorithm on the underlying graph in order to determine the new approximation.
-        returns: array of the points chosen to be in the approximation
+        returns: array of the vertices chosen to be in the approximation
         '''
 
         # First item in result is node: shortest distance
@@ -161,11 +169,7 @@ class LinearApproximation:
         # These are the vertices that will define the optimal approximated piecewise function
         solution_vertices = reverse_path(result[1], self.s, self.t)
 
-        # Returns the points that are corresponding to the vertices in the shortest path
-        # Recall that the name of a vertex is the number point that it is
-        # So, in order to retrieve the point that corresponds to a particular vertex, we may just access that index
-        approximated_pts = [self.points[int(i.name)] for i in solution_vertices]
-        return approximated_pts
+        return solution_vertices
 
     def animate_dijkstra(self, pts_approx):
         '''
