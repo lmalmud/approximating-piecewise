@@ -27,7 +27,10 @@ class LinearApproximation:
         if len(points) < 2:
             raise Exception("Must include at least two points in order to define a piecewise function")
 
-        self.points = sorted(points) # Python automatically sorts multi-dimensional arrays by the first element
+        # Python automatically sorts multi-dimensional arrays by the first element
+        self.points, self.names = zip(*sorted(zip(points, names or range(len(points))))) # Sort the names corresponding with the points
+        self.points = list(self.points)
+        self.names = list(names)
         self.alpha = alpha # The cost of storing a segment
         self.beta = beta # The cost of error
 
@@ -43,17 +46,25 @@ class LinearApproximation:
 
         self.edges = []
         # Insert an edge (i, j) for each i < j representing adding a segment between a_i, a_j
-        for i, v_i in enumerate(self.vertices):
-            for j, v_j in enumerate(self.vertices[i+1:]): # Only would insert an edge from vertices that come after
-                cost = alpha
+        for i in range(len(self.vertices)):
+            for j in range(i+1, len(self.vertices)): # Only would insert an edge from vertices that come after
+                cost = self.alpha
                 for k in range(i, j+1):
                     # f_1(x_k): The true value of the function at x_k
-                    f1_xk = self.f_1(self.points[k][0]) 
+                    #f1_xk = self.f_1(self.points[k][0]) 
+                    f1_xk = self.f_1(self.vertices[k].x)
+                    #print(f'f1_xk is {f1_xk} when i = {i} and j = {j} and k = {k}')
                     
                     # f_2(x_k): The value of the approximated function at x_k were there a segment between p_i and p_j
-                    f2_xk = self.eval_segment(self.points[k][0], self.points[i], self.points[j])
-                    cost += beta * pow(f1_xk - f2_xk, 2)
-                self.edges.append(Edge(v_i, v_j, cost))
+                    f2_xk = self.eval_segment(self.vertices[k].x, [self.vertices[i].x, self.vertices[i].y], [self.vertices[j].x, self.vertices[j].y])
+                    #print(f'f2_xk is {f2_xk} when i = {i} and j = {j}')
+                    #f2_xk = self.eval_segment(self.points[k][0], self.points[i], self.points[j])
+                    cost += self.beta * pow(f1_xk - f2_xk, 2)
+                
+                self.edges.append(Edge(self.vertices[i], self.vertices[j], cost))
+
+        for edge in self.edges:
+            print(f'cost between {edge.start} and {edge.end} is {edge.length}')
 
         self.graph = Graph(self.vertices, self.edges)
         self.s = self.vertices[0] # The source node must be the first point, corresponding to the first vertex
@@ -71,23 +82,28 @@ class LinearApproximation:
         if x > self.points[-1][0]: # Above the largest point
             raise Exception(f'x-coordinate too large: must be within the function domain of: [{self.points[0][0]}, {self.points[-1][0]}]')
         
-        index = 0
-        before_point = self.points[index]
-        while before_point[0] < x and index < len(self.points):
+        for point in self.points: # if x lands on any input point
+            if x == point[0]:
+                return point[1]
+        
+        '''
+        if x == self.points[0][0]: # x coordinate is the same as the first point
+            return self.points[0][1] # Return the corresponding y coordinate
+        if x == self.points[0][-1]: # x coordinate is the same as the last point
+            return self.points[-1][1] # Return the corresponding y coordinate
+        '''
+
+        index = 1
+        # keep iterating until we find a point smaller than or equal to
+        while x > self.points[index][0] and index < len(self.points):
             index += 1
-            before_point = self.points[index]
-        after_point = self.points[-1]
-        if index < len(self.points) - 1: # The point is not the last point
-            after_point = self.points[index+1]
-        else: # In this case, x is the last point, so use the last segment
-            before_point = self.points[index-1]
 
         # To debug the boundaries:
         # print(f'x: {x}, before_point: {before_point}, after_point: {after_point}')
 
         # The main amount of work in this function is to determine the approproate
         # points that define the segment that x is located in.
-        return self.eval_segment(x, before_point, after_point)
+        return self.eval_segment(x, self.points[index-1], self.points[index])
 
     def eval_segment(self, x, pt1, pt2):
         ''' Returns the value of the linear function defined by the line through
@@ -108,6 +124,9 @@ class LinearApproximation:
             return y1
         elif x == x2:
             return y2
+        
+        if x1 == x2: # Edge case when the segment is a vertical line
+            return (y1 + y2) / 2
         
         # Otherwise, calculate the point along the segment (x1, y1), (x2, y2)
         m = (y2-y1)/(x2-x1)

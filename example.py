@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 import random
 
 p = [[random.randint(0, 50), random.randint(0, 50)] for i in range(25)]
-obj = LinearApproximation(p, 1, 1)
+obj = LinearApproximation(p, 0, 1)
 
 # Run the approximation algorithm and graph the results
-'''
+
 fig, ax = plt.subplots()
 approximated  = obj.approximate()
 obj.plt_approximation(fig, ax, approximated, True, True)
 plt.show()
-'''
 
-obj.animate_dijkstra()
+
+#obj.animate_dijkstra()
