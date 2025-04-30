@@ -27,7 +27,11 @@ print(f'evaluate f_1(6) expects 2 (last point - edge case): {test1_obj.f_1(6)}')
 # test1_obj.plt()
 
 # Run the approximation algorithm and graph the results
+'''
 fig, ax = plt.subplots()
 approximated  = test1_obj.approximate()
 test1_obj.plt_approximation(fig, ax, approximated)
 plt.show()
+'''
+
+test1_obj.animate_dijkstra()

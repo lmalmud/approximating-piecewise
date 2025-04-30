@@ -3,6 +3,7 @@ from Edge import Edge
 from Graph import Graph
 from dijkstra import *
 import matplotlib.pyplot as plt
+from dijkstra_animate import *
 
 '''
 LinearApproximation.py
@@ -171,10 +172,12 @@ class LinearApproximation:
 
         return solution_vertices
 
-    def animate_dijkstra(self, pts_approx):
+    def animate_dijkstra(self):
         '''
-        Plots the points describing the original function and draws line segments between
-        each consecutive pair of points in pts_approx.
-        pts_approx: array of Verticie objects
+        Runs the approximation algorithm and outputs the animated results as the algorithm progresses.
+        ENtire animation and shortest path approximation conducted within dijkstra_animate.
+        fig: matplotlib figure
+        ax: matplotlib axis
+        Returns: none
         '''
-        pass
+        dijkstra_animate(self.graph.WeightMap(), self.s, self.t, self.vertices)
