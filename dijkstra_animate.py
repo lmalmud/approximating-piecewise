@@ -42,7 +42,7 @@ Dijkstra is not a recursive algorithm, because it only visits each vertex once. 
 well as a starting and ending vertex.
 '''
 
-def dijkstra_animate(weightmap, start, end, pts):
+def dijkstra_animate(weightmap, start, end, pts, ani_name="Approximation_Animation"):
     inf = float('inf')
     known = set()
     priority = priority_queue()
@@ -111,45 +111,79 @@ def dijkstra_animate(weightmap, start, end, pts):
             this_frame = [] # using ArtistAnimation, we will build each frame of the animation one at a time
             # we will append every object that we wish to appear on this frame to this_frame objects
 
-            # 1: append everything having to do with the underlying function
-            for i in range(len(pts) - 1):
-                # plots the segment between all consecutive pairs of points
-                p, = ax.plot((pts[i].x, pts[i+1].x), (pts[i].y, pts[i+1].y), color = 'black')
-                this_frame.append(p)
+            # 1: Plot the original function
+            points_x = [p.x for p in pts]
+            points_y = [p.y for p in pts]
             
-            for i in range(len(pts)):
-                # plots a dot for each point
-                dot, = ax.plot(pts[i].x, pts[i].y, 'o', color='black') # Add a dot at each point
-                this_frame.append(dot)
-                #ax.annotate(self.vertices[i].name, (pts[i].x, pts[i].y)) # Label the point with pi
+            p, = ax.plot(points_x, points_y, color="black", linestyle="dashed")
+            this_frame.append(p)
+            
+            # Additionally, plot each vertex in the original function
+            dot = ax.scatter(points_x, points_y, color='black')
+            this_frame.append(dot)
 
-            # 2: append all of the segments that are currently active
-            for item in path.keys():
-                print(f'from: {item} to {path[item]}')
-                line, = ax.plot((item.x, path[item].x), (item.y, path[item].y), color='red')
-                this_frame.append(line)
+            # 2: Draw all the options from the current vertex
+            if current_vertex != end:
+                # Color edges according to their length
+                cmap = plt.get_cmap("Wistia")    
+                adjacents = list(weightmap[current_vertex].keys())
+                lengths = list(weightmap[current_vertex].values())
+                max_length = max(lengths)
+                if max_length == 0:
+                    max_length = 0.001 # Avoid a divide by 0 error
+                colors = [cmap(l / max_length) for l in lengths]
 
-            # 3: color the current dot in red
-            current_dot, = ax.plot(current_vertex.x, current_vertex.y, 'o', color='red')
+                # Draw each edge individually so color map works
+                for i in range(len(lengths)):
+                    line, = ax.plot((current_vertex.x, adjacents[i].x),(current_vertex.y, adjacents[i].y),
+                                   color = colors[i])
+                    # Label each edge with its length as well
+                    text = ax.text((current_vertex.x + adjacents[i].x)/2, 
+                                   (current_vertex.y + adjacents[i].y)/2, 
+                                   f"{lengths[i]:.2f}", animated=True)
+                    
+                    this_frame.append(line)
+                    this_frame.append(text)
+                    
+            
+
+            # 3: color the current vertex as a red star
+            current_dot, = ax.plot(current_vertex.x, current_vertex.y, '*', color='red')
             this_frame.append(current_dot)
-            print(f'current_vertex: {type(current_vertex)}')
-
-
+            
+            # Add the known vertices to the plot in orange
+            known_x = [k.x for k in known]
+            known_y = [k.y for k in known]
+            known_dots = ax.scatter(known_x, known_y, color="orange")
+            this_frame.append(known_dots)
+            
+            # Include this frame to the list of frames
             artists.append(this_frame)
 
-    # To plot the approximation function at the end
-    '''
+    
+    # Plot the final approximation at the end
     this_frame = []
     ending_path = reverse_path(path, start, end)
     for i in range(len(ending_path) - 1):
-        p, = ax.plot((ending_path[i].x, ending_path[i+1].x), (ending_path[i].y, ending_path[i+1].y), color = 'green')
+        p, = ax.plot((ending_path[i].x, ending_path[i+1].x), (ending_path[i].y, ending_path[i+1].y), 
+                     color = "yellow", alpha=0.5)
+        
         this_frame.append(p)
+    x_coords = [v.x for v in ending_path]
+    y_coords = [v.y for v in ending_path]
+    dots = ax.scatter(x_coords, y_coords, marker="$\u263A$", s=100, color="orange")
+                                        # Smiley face that's orange
+    this_frame.append(dots)
     artists.append(this_frame)
-    '''
     
     #Once Dijkstra has finished, it returns the distances from the start to each vertex it visited, and the path to get there
-    ani = animation.ArtistAnimation(fig, artists, interval=200, repeat=True, blit=False)
+    ani = animation.ArtistAnimation(fig, artists, interval=200, repeat=True, blit=True)
     plt.show()
+    
+    # Save the animation as a gif that lasts 5 seconds
+        # The animation wasn't working correctly before on my end
+    writergif = animation.PillowWriter(fps=len(artists)//5) # Round to integer division
+    ani.save(f'{ani_name}.gif', writer=writergif)
     return priority.index, path
 
 ## Making the Path Readable ##
