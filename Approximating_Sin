@@ -1,0 +1,14 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from LinearApproximation import LinearApproximation
+
+X = np.arange(0, 4 * np.pi, np.pi/24)
+points = [[x,np.sin(x)] for x in X] 
+
+alpha=1
+b = 1
+sin = LinearApproximation(points, alpha, b)
+fig, ax = plt.subplots()
+apx = sin.approximate()
+sin.plt_approximation(fig, ax, apx)
+sin.animate_dijkstra("Sin_Approximation")
