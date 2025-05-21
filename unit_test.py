@@ -10,7 +10,7 @@ from LinearApproximation import LinearApproximation
 import matplotlib.pyplot as plt
 
 test1 = [[0, 0], [1, 2], [3, -1], [4, 0], [6, 2]]
-test1_obj = LinearApproximation(test1, 0, 1)
+test1_obj = LinearApproximation(test1, 2, 1)
 
 print('TEST: evaluate_segment')
 print(f'evaluate segment between (0, 0), (1, 2) at 0 expects 0: {test1_obj.eval_segment(0, test1[0], test1[1])}')

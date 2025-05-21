@@ -27,7 +27,7 @@ fig, ax = plt.subplots()
 START_INDEX = 0
 END_INDEX = 100
 data_subset = points[START_INDEX:END_INDEX] # Only take a subset of the data, otherwise approximation takes too long
-obj = LinearApproximation(data_subset, 0, 4, labels) # alpha = 0 as there is no additional cost to store
+obj = LinearApproximation(data_subset, 3, 4, labels) # alpha = 0 as there is no additional cost to store
 approximated  = obj.approximate()
 obj.plt_approximation(fig, ax, approximated, False, True)
 plt.title('Adjusted Closing Price of Amazon Stocks Over Time')
